@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  airflow:
+    build: .
+    command: airflow standalone
+    ports:
+      - "8080:8080"
+    environment:
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}
+      - AIRFLOW__CORE__EXECUTOR=${AIRFLOW__CORE__EXECUTOR}
+      - AIRFLOW__WEBSERVER__DEFAULT_USER=${AIRFLOW__WEBSERVER__DEFAULT_USER}
+      - AIRFLOW__WEBSERVER__DEFAULT_PASSWORD=${AIRFLOW__WEBSERVER__DEFAULT_PASSWORD}
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    depends_on:
+      - postgres
+
+  # streamlit:
+  #   build: .
+  #   command: streamlit run streamlit_app.py --server.port=8501
+  #   ports:
+  #     - "8501:8501"
+  #   depends_on:
+  #     - postgres
+
+volumes:
+  postgres_data:
